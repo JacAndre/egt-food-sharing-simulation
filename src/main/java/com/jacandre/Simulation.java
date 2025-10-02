@@ -16,6 +16,10 @@ public class Simulation {
     private final GridManager gridManager;
     private int tick;
 
+    private int totalBirths = 0;
+    private int totalDeaths = 0;
+    private double cumulativeEnergy = 0.0;
+
     public Simulation() {
         this(new GridManager(Constants.GRID_SIZE), new ArrayList<>(), new ArrayList<>(), Constants.RANDOM);
         initialiseAgents();
@@ -96,7 +100,6 @@ public class Simulation {
         log.debug("Tick {} begins", tick);
 
         cleanUpFoodSources();
-//        Collections.shuffle(livingAgents, Constants.RANDOM);
 
         List<Agent> agentsToRemove = new ArrayList<>();
 
@@ -122,12 +125,25 @@ public class Simulation {
             if (pos != null) {
                 gridManager.removeEntity(agent);
                 gridManager.releasePosition(pos);
+                ++totalDeaths;
             }
         }
         livingAgents.removeAll(agentsToRemove);
 
-//        maybeGenerateNewFood();
+        maybeGenerateNewFood();
+
+        for (Agent agent : livingAgents) {
+            cumulativeEnergy += agent.getEnergy();
+        }
+
         log.info("Tick {} complete. {} agents remain.", tick, livingAgents.size());
+        log.info("Metrics at tick {}: Avg energy = {}, Births = {}, Deaths = {}",
+                tick,
+                cumulativeEnergy / livingAgents.size(),
+                totalBirths,
+                totalDeaths);
+        cumulativeEnergy = 0.0;
+
     }
 
     // TODO: Add strength-based arbitration for contested food consumption
@@ -233,17 +249,24 @@ public class Simulation {
             livingAgents.add(child);
 
             agent.setLastReproducedTick(tick); // update cooldown
+            ++totalBirths;
 
             log.info("Agent {} reproduced at tick {}. Child agent {} created at {} with {} energy.",
                     agent.getId(), tick, child.getId(), childPos, splitEnergy);
         }
     }
 
-    private void applyCostOfLiving(Agent agent) {
-
+    private void maybeGenerateNewFood() {
+        if (activeFoodSources.size() >= Constants.MAX_FOOD_SOURCES) {
+            return;
+        }
+        if (Constants.RANDOM.nextDouble() < Constants.FOOD_SPAWN_PROBABILITY) {
+            generateFoodSource();
+        }
     }
 
-    public static void main( String[] args ) {
 
+    private void applyCostOfLiving(Agent agent) {
+        agent.decreaseEnergy(Constants.COST_OF_LIVING);
     }
 }
