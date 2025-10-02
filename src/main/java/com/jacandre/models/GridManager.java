@@ -99,7 +99,7 @@ public class GridManager {
             grid[oldPos.x][oldPos.y] = null;
             grid[wrappedNew.x][wrappedNew.y] = entity;
             entityPositions.put(entity, wrappedNew);
-            releasePosition(oldPos); // optional
+            releasePosition(oldPos);
             return true;
         } finally {
             if (lockA != lockB) lockB.unlock();
