@@ -147,7 +147,7 @@ public class GridManager {
         return grid[wrapped.x][wrapped.y] != null;
     }
 
-    public List<Point> getNeighbours(Point centre, int radius) {
+    public List<Point> getNeighbourPositions(Point centre, int radius) {
         List<Point> neighbours = new ArrayList<>();
 
         for (int dx = -radius; dx <= radius; dx++) {
@@ -163,13 +163,13 @@ public class GridManager {
     }
 
     public List<Point> getEmptyNeighbours(Point centre, int radius) {
-        return getNeighbours(centre, radius).stream()
+        return getNeighbourPositions(centre, radius).stream()
                 .filter(p -> !isOccupied(p))
                 .collect(Collectors.toList());
     }
 
     public List<GridEntity> getOccupiedNeighbours(Point centre, int radius) {
-        return getNeighbours(centre, radius).stream()
+        return getNeighbourPositions(centre, radius).stream()
                 .map(this::getEntityAt)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
