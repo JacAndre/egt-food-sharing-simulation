@@ -6,11 +6,13 @@ public class Constants {
     // Simulation Grid and Agent Count
     public static final int GRID_SIZE = 50;
     public static final int NUM_AGENTS = 1500; // Total number of agents (max GRID_SIZE * GRID_SIZE)
+    public static final int MAX_FOOD_SOURCES = 5;
 
     // Core Game Parameters
     public static final double INITIAL_ENERGY = 100.0;
     public static final double COST_OF_LIVING = 0.5; // Includes movement cost
     public static final double FOOD_REWARD = 20.0;
+    public static final int FOOD_LIFESPAN = 100;
 
     // Assist Mechanism Parameters
     public static final double ASSIST_COST = 2.0; // Cost incurred by Helper when offering assistance

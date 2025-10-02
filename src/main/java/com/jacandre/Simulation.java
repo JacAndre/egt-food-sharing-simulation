@@ -5,14 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 @Slf4j
 public class Simulation {
     private final List<Agent> livingAgents;
+    private final List<Food> activeFoodSources = new ArrayList<>();
     private final GridManager gridManager;
-    private Point foodSource;
     private int tick;
 
     public Simulation() {
@@ -49,9 +49,41 @@ public class Simulation {
     }
 
     private void generateFoodSource() {
+        if (activeFoodSources.size() >= Constants.MAX_FOOD_SOURCES) {
+            log.debug("Maximum food sources reached. Skipping generation.");
+            return;
+        }
 
+        Point pos = gridManager.getNextAvailablePosition();
+        if (pos == null) {
+            log.warn("No available position to place food.");
+            return;
+        }
 
+        Food food = new Food();
+        if (gridManager.placeEntity(food, pos)) {
+            activeFoodSources.add(food);
+            log.info("Food source generated at {}", pos);
+        }
     }
+
+    // Remove expired Food
+    private void cleanUpFoodSources() {
+        Iterator<Food> iterator = activeFoodSources.iterator();
+        while (iterator.hasNext()) {
+            Food food = iterator.next();
+            food.ageOneTick();
+            if (food.isExpired()) {
+                Point pos = gridManager.getPositionOf(food);
+                gridManager.removeEntity(food);
+                gridManager.releasePosition(pos);
+                iterator.remove();
+                log.info("Food at {} expired and removed.", pos);
+            }
+        }
+    }
+
+
 
     public static void main( String[] args ) {
 

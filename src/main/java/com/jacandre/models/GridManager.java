@@ -131,7 +131,7 @@ public class GridManager {
         return grid[wrapped.x][wrapped.y];
     }
 
-    public Point getPosition(GridEntity entity) {
+    public Point getPositionOf(GridEntity entity) {
         return entityPositions.get(entity);
     }
 
