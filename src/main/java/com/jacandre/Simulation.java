@@ -216,32 +216,28 @@ public class Simulation {
     }
 
     private void maybeReproduce(Agent agent) {
-        if (agent.getEnergy() < Constants.REPRODUCTION_THRESHOLD) {
-            return;
-        }
+        if (agent.getEnergy() < Constants.REPRODUCTION_THRESHOLD) return;
+        if (tick - agent.getLastReproducedTick() < Constants.REPRODUCTION_COOLDOWN) return;
 
         Point parentPos = gridManager.getPositionOf(agent);
         List<Point> emptyNeighbours = gridManager.getEmptyNeighbours(parentPos, 1);
-
-        if (emptyNeighbours.isEmpty()) {
-            return;
-        }
+        if (emptyNeighbours.isEmpty()) return;
 
         Point childPos = emptyNeighbours.get(Constants.RANDOM.nextInt(emptyNeighbours.size()));
-        Agent child = new Agent(agent.getStrategy()); // inherit strategy from parent
+        Agent child = new Agent(agent.getStrategy());
 
-        boolean placed = gridManager.placeEntity(child, childPos);
-        if (placed) {
+        if (gridManager.placeEntity(child, childPos)) {
             double splitEnergy = agent.getEnergy() / 2.0;
             agent.setEnergy(splitEnergy);
             child.setEnergy(splitEnergy);
             livingAgents.add(child);
 
-            log.info("Agent {} reproduced at {}. Child agent {} created with {} energy.",
-                    agent.getId(), childPos, child.getId(), splitEnergy);
+            agent.setLastReproducedTick(tick); // update cooldown
+
+            log.info("Agent {} reproduced at tick {}. Child agent {} created at {} with {} energy.",
+                    agent.getId(), tick, child.getId(), childPos, splitEnergy);
         }
     }
-
 
     private void applyCostOfLiving(Agent agent) {
 

@@ -11,6 +11,7 @@ public class Constants {
     // Core Game Parameters
     public static final double INITIAL_ENERGY = 100.0;
     public static final double REPRODUCTION_THRESHOLD = 30.0; // Fitness level to trigger reproduction
+    public static final int REPRODUCTION_COOLDOWN = 25;
     public static final double COST_OF_LIVING = 0.5; // Includes movement cost
     public static final double MOVE_COST = 1; // Includes movement cost
     public static final double FOOD_REWARD = 20.0;

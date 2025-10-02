@@ -40,6 +40,7 @@ public class Agent implements GridEntity {
     private final String id;
     private Strategy strategy;
     private double energy;
+    private int lastReproducedTick = 0;
 
     public Agent(Strategy initialStrategy) {
         this.id = java.util.UUID.randomUUID().toString();

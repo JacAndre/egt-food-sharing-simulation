@@ -125,28 +125,27 @@ class SimulationTest {
     }
 
     @Test
-    void agentReproducesWhenEnergyIsHigh() {
+    void agentRespectsReproductionCooldown() {
         GridManager grid = new GridManager(5);
         Agent parent = new Agent(Strategy.SELFISH);
-        parent.setEnergy(Constants.REPRODUCTION_THRESHOLD + 20); // ensure above threshold
+        parent.setEnergy(Constants.INITIAL_ENERGY);
 
         Point parentPos = new Point(2, 2);
         grid.placeEntity(parent, parentPos);
 
         Simulation sim = new Simulation(grid, List.of(parent), List.of(), new Random(42));
+
+        // Run ticks below cooldown threshold
+        for (int i = 0; i < Constants.REPRODUCTION_COOLDOWN - 1; i++) {
+            sim.stepSimulation();
+        }
+
+        assertEquals(1, sim.getLivingAgents().size(), "Agent should not reproduce before cooldown");
+
+        // Run one more tick to reach cooldown
         sim.stepSimulation();
 
-        List<Agent> agents = sim.getLivingAgents();
-        assertEquals(2, agents.size(), "Parent should reproduce and create one child");
-
-        Agent child = agents.stream()
-                .filter(a -> !a.getId().equals(parent.getId()))
-                .findFirst()
-                .orElseThrow();
-
-        double expectedEnergy = ((Constants.REPRODUCTION_THRESHOLD + 20) - Constants.MOVE_COST) / 2.0;
-        assertEquals(expectedEnergy, parent.getEnergy(), 0.01);
-        assertEquals(expectedEnergy, child.getEnergy(), 0.01);
+        assertEquals(2, sim.getLivingAgents().size(), "Agent should reproduce after cooldown");
     }
 
 }
