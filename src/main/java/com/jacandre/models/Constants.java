@@ -23,5 +23,5 @@ public class Constants {
     public static final double BETA = 0.1; // Selection strength for the Fermi update rule (higher = stronger selection)
 
     // Utility for randomization (ensure consistent random numbers across all classes)
-    public static final Random RANDOM = new Random();
+    public static final Random RANDOM = new Random(System.currentTimeMillis());
 }
