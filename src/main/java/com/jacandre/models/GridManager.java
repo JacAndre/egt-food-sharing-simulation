@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @ThreadSafe
 public class GridManager {
@@ -55,7 +56,9 @@ public class GridManager {
 
         lock.lock();
         try {
-            if (grid[wrapped.x][wrapped.y] != null) return false;
+            if (grid[wrapped.x][wrapped.y] != null) {
+                return false;
+            }
 
             grid[wrapped.x][wrapped.y] = entity;
             entityPositions.put(entity, wrapped);
@@ -71,7 +74,9 @@ public class GridManager {
      */
     public boolean moveEntity(GridEntity entity, Point newPosition) {
         Point oldPos = entityPositions.get(entity);
-        if (oldPos == null) return false;
+        if (oldPos == null) {
+            return false;
+        }
 
         Point wrappedNew = wrap(newPosition);
         ReentrantLock lockA = cellLocks[oldPos.x][oldPos.y];
@@ -104,7 +109,9 @@ public class GridManager {
 
     public void removeEntity(GridEntity entity) {
         Point position = entityPositions.get(entity);
-        if (position == null) return;
+        if (position == null) {
+            return;
+        }
 
         Point wrapped = wrap(position);
         ReentrantLock lock = cellLocks[wrapped.x][wrapped.y];
@@ -140,17 +147,34 @@ public class GridManager {
         return grid[wrapped.x][wrapped.y] != null;
     }
 
-    public List<GridEntity> getEntitiesInRadius(Point center, int radius) {
-        List<GridEntity> entities = new ArrayList<>();
+    public List<Point> getNeighbours(Point centre, int radius) {
+        List<Point> neighbours = new ArrayList<>();
+
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dy = -radius; dy <= radius; dy++) {
-                Point neighbor = wrap(new Point(center.x + dx, center.y + dy));
-                GridEntity e = getEntityAt(neighbor);
-                if (e != null) entities.add(e);
+                if (dx == 0 && dy == 0) continue;
+
+                Point neighbour = new Point(centre.x + dx, centre.y + dy);
+                neighbours.add(wrap(neighbour));
             }
         }
-        return entities;
+
+        return neighbours;
     }
+
+    public List<Point> getEmptyNeighbours(Point centre, int radius) {
+        return getNeighbours(centre, radius).stream()
+                .filter(p -> !isOccupied(p))
+                .collect(Collectors.toList());
+    }
+
+    public List<GridEntity> getOccupiedNeighbours(Point centre, int radius) {
+        return getNeighbours(centre, radius).stream()
+                .map(this::getEntityAt)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
 
     public List<Point> getOccupiedPositions() {
         List<Point> occupied = new ArrayList<>();
