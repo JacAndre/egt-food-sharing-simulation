@@ -123,4 +123,30 @@ class SimulationTest {
 
         assertNull(grid.getEntityAt(pos), "Food should be removed after expiration");
     }
+
+    @Test
+    void agentReproducesWhenEnergyIsHigh() {
+        GridManager grid = new GridManager(5);
+        Agent parent = new Agent(Strategy.SELFISH);
+        parent.setEnergy(Constants.REPRODUCTION_THRESHOLD + 20); // ensure above threshold
+
+        Point parentPos = new Point(2, 2);
+        grid.placeEntity(parent, parentPos);
+
+        Simulation sim = new Simulation(grid, List.of(parent), List.of(), new Random(42));
+        sim.stepSimulation();
+
+        List<Agent> agents = sim.getLivingAgents();
+        assertEquals(2, agents.size(), "Parent should reproduce and create one child");
+
+        Agent child = agents.stream()
+                .filter(a -> !a.getId().equals(parent.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        double expectedEnergy = ((Constants.REPRODUCTION_THRESHOLD + 20) - Constants.MOVE_COST) / 2.0;
+        assertEquals(expectedEnergy, parent.getEnergy(), 0.01);
+        assertEquals(expectedEnergy, child.getEnergy(), 0.01);
+    }
+
 }

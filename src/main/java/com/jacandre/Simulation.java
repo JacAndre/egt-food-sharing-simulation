@@ -1,6 +1,7 @@
 package com.jacandre;
 
 import com.jacandre.models.*;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
@@ -8,6 +9,7 @@ import java.util.*;
 import java.util.List;
 
 @Slf4j
+@Getter
 public class Simulation {
     private final List<Agent> livingAgents;
     private final List<Food> activeFoodSources;
@@ -128,27 +130,6 @@ public class Simulation {
         log.info("Tick {} complete. {} agents remain.", tick, livingAgents.size());
     }
 
-    private void moveAgent(Agent agent) {
-        Point currentPos = gridManager.getPositionOf(agent);
-        if (currentPos == null) {
-            return;
-        }
-
-        List<Point> emptyNeighbours = gridManager.getEmptyNeighbours(currentPos, 1);
-        if (emptyNeighbours.isEmpty()) {
-            return;
-        }
-
-        Point target = emptyNeighbours.get(Constants.RANDOM.nextInt(emptyNeighbours.size()));
-        boolean moved = gridManager.moveEntity(agent, target);
-
-        if (moved) {
-            agent.decreaseEnergy(Constants.COST_OF_LIVING);
-        } else {
-            log.debug("Agent {} failed to move to {}", agent.getId(), target);
-        }
-    }
-
     // TODO: Add strength-based arbitration for contested food consumption
     //
     // Goal:
@@ -180,7 +161,7 @@ public class Simulation {
                 consumeFoodAt(p, agent);
                 boolean moved = gridManager.moveEntity(agent, p);
                 if (moved) {
-                    agent.decreaseEnergy(Constants.COST_OF_LIVING);
+                    agent.decreaseEnergy(Constants.MOVE_COST);
                 }
                 return;
             }
@@ -204,7 +185,7 @@ public class Simulation {
             Point target = emptyNeighbours.get(Constants.RANDOM.nextInt(emptyNeighbours.size()));
             boolean moved = gridManager.moveEntity(agent, target);
             if (moved) {
-                agent.decreaseEnergy(Constants.COST_OF_LIVING);
+                agent.decreaseEnergy(Constants.MOVE_COST);
             }
         }
     }
@@ -235,8 +216,32 @@ public class Simulation {
     }
 
     private void maybeReproduce(Agent agent) {
+        if (agent.getEnergy() < Constants.REPRODUCTION_THRESHOLD) {
+            return;
+        }
 
+        Point parentPos = gridManager.getPositionOf(agent);
+        List<Point> emptyNeighbours = gridManager.getEmptyNeighbours(parentPos, 1);
+
+        if (emptyNeighbours.isEmpty()) {
+            return;
+        }
+
+        Point childPos = emptyNeighbours.get(Constants.RANDOM.nextInt(emptyNeighbours.size()));
+        Agent child = new Agent(agent.getStrategy()); // inherit strategy from parent
+
+        boolean placed = gridManager.placeEntity(child, childPos);
+        if (placed) {
+            double splitEnergy = agent.getEnergy() / 2.0;
+            agent.setEnergy(splitEnergy);
+            child.setEnergy(splitEnergy);
+            livingAgents.add(child);
+
+            log.info("Agent {} reproduced at {}. Child agent {} created with {} energy.",
+                    agent.getId(), childPos, child.getId(), splitEnergy);
+        }
     }
+
 
     private void applyCostOfLiving(Agent agent) {
 
