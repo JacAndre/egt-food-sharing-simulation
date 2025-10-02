@@ -5,7 +5,7 @@ import java.util.Random;
 public class Constants {
     // Simulation Grid and Agent Count
     public static final int GRID_SIZE = 50;
-    public static final int NUM_AGENTS = 1500; // Total number of agents (max GRID_SIZE * GRID_SIZE)
+    public static int NUM_AGENTS = 1500; // Total number of agents (max GRID_SIZE * GRID_SIZE)
     public static final int MAX_FOOD_SOURCES = 5;
     public static final double FOOD_SPAWN_PROBABILITY = 0.2; // 20% chance per tick
 
