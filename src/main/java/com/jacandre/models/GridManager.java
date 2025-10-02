@@ -1,80 +1,128 @@
 package com.jacandre.models;
 
+import net.jcip.annotations.ThreadSafe;
+
 import java.awt.Point;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
+@ThreadSafe
 public class GridManager {
     private final GridEntity[][] grid;
-    private final Map<GridEntity, Point> entityPositions;
-    private final List<Point> unoccupiedPositions;
+    private final ConcurrentHashMap<GridEntity, Point> entityPositions;
+    private final ConcurrentLinkedQueue<Point> unoccupiedPositions;
+    private final ReentrantLock[][] cellLocks;
     private final int gridSize;
 
     public GridManager(int gridSize) {
         this.gridSize = gridSize;
         this.grid = new GridEntity[gridSize][gridSize];
-        this.entityPositions = new HashMap<>();
+        this.entityPositions = new ConcurrentHashMap<>();
         this.unoccupiedPositions = initialiseUnoccupiedPositions();
+        this.cellLocks = new ReentrantLock[gridSize][gridSize];
+
+        initialiseCellLocks();
     }
 
-    private List<Point> initialiseUnoccupiedPositions() {
+    private ConcurrentLinkedQueue<Point> initialiseUnoccupiedPositions() {
         List<Point> unoccupiedPositions = new ArrayList<>();
-
         for (int x = 0; x < gridSize; x++) {
             for (int y = 0; y < gridSize; y++) {
                 unoccupiedPositions.add(new Point(x, y));
             }
         }
-
         Collections.shuffle(unoccupiedPositions, Constants.RANDOM);
-        return unoccupiedPositions;
+        return new ConcurrentLinkedQueue<>(unoccupiedPositions);
+    }
+
+    private void initialiseCellLocks() {
+        for (int x = 0; x < gridSize; x++) {
+            for (int y = 0; y < gridSize; y++) {
+                this.cellLocks[x][y] = new ReentrantLock();
+            }
+        }
     }
 
     public Point getNextAvailablePosition() {
-        if (unoccupiedPositions.isEmpty()) return null;
-        return unoccupiedPositions.removeFirst();
+        return unoccupiedPositions.poll(); // returns null if empty
     }
 
     public boolean placeEntity(GridEntity entity, Point position) {
         Point wrapped = wrap(position);
-        // If position is occupied, abort.
-        if (grid[wrapped.x][wrapped.y] != null) {
-            return false;
+        ReentrantLock lock = cellLocks[wrapped.x][wrapped.y];
+
+        lock.lock();
+        try {
+            if (grid[wrapped.x][wrapped.y] != null) return false;
+
+            grid[wrapped.x][wrapped.y] = entity;
+            entityPositions.put(entity, wrapped);
+            return true;
+        } finally {
+            lock.unlock();
         }
-
-        grid[wrapped.x][wrapped.y] = entity;
-        entityPositions.put(entity, wrapped);
-
-        return true;
     }
 
+    /**
+     * Thread-safe movement using fine-grained cell locks.
+     * Must acquire locks on both source and destination cells before mutation.
+     */
     public boolean moveEntity(GridEntity entity, Point newPosition) {
-        Point wrapped = wrap(newPosition);
-        if (!entityPositions.containsKey(entity)) {
-            return false;
-        }
-        if (grid[wrapped.x][wrapped.y] != null) {
-            return false;
-        }
-
         Point oldPos = entityPositions.get(entity);
-        grid[oldPos.x][oldPos.y] = null;
-        grid[wrapped.x][wrapped.y] = entity;
-        entityPositions.put(entity, wrapped);
+        if (oldPos == null) return false;
 
-        return true;
+        Point wrappedNew = wrap(newPosition);
+        ReentrantLock lockA = cellLocks[oldPos.x][oldPos.y];
+        ReentrantLock lockB = cellLocks[wrappedNew.x][wrappedNew.y];
+
+        // Consistent lock ordering to prevent deadlock
+        if (lockA == lockB) {
+            lockA.lock();
+        } else if (System.identityHashCode(lockA) < System.identityHashCode(lockB)) {
+            lockA.lock();
+            lockB.lock();
+        } else {
+            lockB.lock();
+            lockA.lock();
+        }
+
+        try {
+            if (grid[wrappedNew.x][wrappedNew.y] != null) return false;
+
+            grid[oldPos.x][oldPos.y] = null;
+            grid[wrappedNew.x][wrappedNew.y] = entity;
+            entityPositions.put(entity, wrappedNew);
+            releasePosition(oldPos); // optional
+            return true;
+        } finally {
+            if (lockA != lockB) lockB.unlock();
+            lockA.unlock();
+        }
     }
 
     public void removeEntity(GridEntity entity) {
-        Point position = entityPositions.remove(entity);
-        if (position != null) {
-            grid[position.x][position.y] = null;
+        Point position = entityPositions.get(entity);
+        if (position == null) return;
+
+        Point wrapped = wrap(position);
+        ReentrantLock lock = cellLocks[wrapped.x][wrapped.y];
+
+        lock.lock();
+        try {
+            grid[wrapped.x][wrapped.y] = null;
+            entityPositions.remove(entity);
+            releasePosition(wrapped);
+        } finally {
+            lock.unlock();
         }
     }
 
     public void releasePosition(Point p) {
         Point wrapped = wrap(p);
         if (!isOccupied(wrapped)) {
-            unoccupiedPositions.add(wrapped);
+            unoccupiedPositions.offer(wrapped);
         }
     }
 
@@ -92,16 +140,26 @@ public class GridManager {
         return grid[wrapped.x][wrapped.y] != null;
     }
 
-    public List<Point> getEmptyNeighbors(Point center, int radius) {
-        List<Point> empty = new ArrayList<>();
+    public List<GridEntity> getEntitiesInRadius(Point center, int radius) {
+        List<GridEntity> entities = new ArrayList<>();
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dy = -radius; dy <= radius; dy++) {
-                if (dx == 0 && dy == 0) continue;
                 Point neighbor = wrap(new Point(center.x + dx, center.y + dy));
-                if (!isOccupied(neighbor)) empty.add(neighbor);
+                GridEntity e = getEntityAt(neighbor);
+                if (e != null) entities.add(e);
             }
         }
-        return empty;
+        return entities;
+    }
+
+    public List<Point> getOccupiedPositions() {
+        List<Point> occupied = new ArrayList<>();
+        for (int x = 0; x < gridSize; x++) {
+            for (int y = 0; y < gridSize; y++) {
+                if (grid[x][y] != null) occupied.add(new Point(x, y));
+            }
+        }
+        return occupied;
     }
 
     public int availableCount() {
@@ -109,7 +167,10 @@ public class GridManager {
     }
 
     public void reshuffleAvailablePositions() {
-        Collections.shuffle(unoccupiedPositions, Constants.RANDOM);
+        List<Point> temp = new ArrayList<>(unoccupiedPositions);
+        Collections.shuffle(temp, Constants.RANDOM);
+        unoccupiedPositions.clear();
+        unoccupiedPositions.addAll(temp);
     }
 
     private Point wrap(Point p) {
