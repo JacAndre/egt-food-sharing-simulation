@@ -4,27 +4,32 @@ import com.jacandre.models.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 @Slf4j
 public class Simulation {
     private final List<Agent> livingAgents;
-    private final List<Food> activeFoodSources = new ArrayList<>();
+    private final List<Food> activeFoodSources;
     private final GridManager gridManager;
     private int tick;
 
     public Simulation() {
-        this.livingAgents = new ArrayList<>();
-        this.gridManager = new GridManager(Constants.GRID_SIZE);
-        this.tick = 0;
-
+        this(new GridManager(Constants.GRID_SIZE), new ArrayList<>(), new ArrayList<>(), Constants.RANDOM);
         initialiseAgents();
         generateFoodSource();
 
-        log.info("Simulation initialized with {} agents on a {}x{} grid.", livingAgents.size(), Constants.GRID_SIZE, Constants.GRID_SIZE);
+        log.info("Simulation initialized with {} agents on a {}x{} grid.",
+                livingAgents.size(), Constants.GRID_SIZE, Constants.GRID_SIZE);
+    }
+
+    // For testing
+    public Simulation(GridManager gridManager, List<Agent> agents, List<Food> foodSources, Random random) {
+        this.gridManager = gridManager;
+        this.livingAgents = new ArrayList<>(agents);
+        this.activeFoodSources = new ArrayList<>(foodSources);
+        this.tick = 0;
+        Collections.shuffle(this.livingAgents, random);
     }
 
     private void initialiseAgents() {
@@ -89,7 +94,7 @@ public class Simulation {
         log.debug("Tick {} begins", tick);
 
         cleanUpFoodSources();
-        Collections.shuffle(livingAgents, Constants.RANDOM);
+//        Collections.shuffle(livingAgents, Constants.RANDOM);
 
         List<Agent> agentsToRemove = new ArrayList<>();
 
@@ -119,7 +124,7 @@ public class Simulation {
         }
         livingAgents.removeAll(agentsToRemove);
 
-        maybeGenerateNewFood();
+//        maybeGenerateNewFood();
         log.info("Tick {} complete. {} agents remain.", tick, livingAgents.size());
     }
 
@@ -144,6 +149,26 @@ public class Simulation {
         }
     }
 
+    // TODO: Add strength-based arbitration for contested food consumption
+    //
+    // Goal:
+    // When multiple agents attempt to consume the same food source in the same tick,
+    // resolve the conflict by allowing only the strongest (highest energy) agent to succeed.
+    //
+    // Design Plan:
+    // - Track all agents targeting the same food location
+    // - Compare their energy levels before executing consumeFoodAt()
+    // - Allow only the strongest agent to proceed; others must fallback
+    // - Consider tie-breakers (e.g. random, agent ID) for equal energy
+    //
+    // Benefits:
+    // - Adds realism and strategic tension to food competition
+    // - Prevents simultaneous consumption bugs
+    // - Encourages agents to maintain high energy for priority access
+    //
+    // Status:
+    // Deferred until MVP is stable and single-agent decision flow is complete.
+
     private void act(Agent agent) {
         Point pos = gridManager.getPositionOf(agent);
         List<Point> neighbours = gridManager.getNeighbourPositions(pos, 1);
@@ -152,13 +177,14 @@ public class Simulation {
         for (Point p : neighbours) {
             GridEntity entity = gridManager.getEntityAt(p);
             if (entity instanceof Food) {
+                consumeFoodAt(p, agent);
                 boolean moved = gridManager.moveEntity(agent, p);
                 if (moved) {
                     agent.decreaseEnergy(Constants.COST_OF_LIVING);
-                    consumeFoodIfPresent(agent); // assumes agent is now at food location
                 }
                 return;
             }
+
         }
 
         // 2. Assist if HELPER and no food found
@@ -183,13 +209,29 @@ public class Simulation {
         }
     }
 
-
-    private void consumeFoodIfPresent(Agent agent) {
-
+    private void consumeFoodAt(Point p, Agent agent) {
+        GridEntity entity = gridManager.getEntityAt(p);
+        if (entity instanceof Food food) {
+            activeFoodSources.remove(food);
+            gridManager.removeEntity(food);
+            gridManager.releasePosition(p);
+            agent.increaseEnergy(Constants.FOOD_REWARD);
+        }
     }
 
-    private void assistAgent(Agent agent) {
+    private void assistAgent(Agent helper, Agent recipient) {
+        double transferAmount = Constants.ASSIST_COST;
 
+        if (helper.getEnergy() <= transferAmount) {
+            log.debug("Agent {} attempted to assist but lacked sufficient energy.", helper.getId());
+            return;
+        }
+
+        helper.decreaseEnergy(transferAmount);
+        recipient.increaseEnergy(transferAmount);
+
+        log.info("Agent {} assisted Agent {} with {} energy.",
+                helper.getId(), recipient.getId(), transferAmount);
     }
 
     private void maybeReproduce(Agent agent) {
