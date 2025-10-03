@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Getter
@@ -154,6 +155,10 @@ public class Simulation {
 
         log.info("Tick {} complete. {} agents remain.", tick, livingAgents.size());
 
+        List<Double> energySnapshot = livingAgents.stream()
+                .map(Agent::getEnergy)
+                .collect(Collectors.toList());
+
         SimulationMetrics metrics = new SimulationMetrics();
         metrics.setTick(tick);
         metrics.setAvgEnergy(avgEnergy);
@@ -162,6 +167,7 @@ public class Simulation {
         metrics.setSelfishCount(selfishCount);
         metrics.setHelperBirths(helperBirths);
         metrics.setSelfishBirths(selfishBirths);
+        metrics.setEnergySnapshot(energySnapshot);
 
         metrics.logMetrics();
         metricsHistory.add(metrics);

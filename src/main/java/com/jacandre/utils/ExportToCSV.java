@@ -11,7 +11,7 @@ import java.util.List;
 public class ExportToCSV {
     public static void exportMetricsToCSV(String filename, List<SimulationMetrics> metricsHistory) {
         try (PrintWriter writer = new PrintWriter(filename)) {
-            writer.println("Tick Number,Average Energy,Total Births,Total Deaths,HELPER Agents,SELFISH Agents,HELPER Births,SELFISH Births");
+            writer.println("Tick Number,Average Energy,Total Births,Total Deaths,HELPER Agents,SELFISH Agents,HELPER Births,SELFISH Births,Energy Snapshot");
 
             for (SimulationMetrics metrics : metricsHistory) {
                 writer.println(metrics.toCSVRow());
