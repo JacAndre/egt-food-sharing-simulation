@@ -16,9 +16,15 @@ public class Simulation {
     private final GridManager gridManager;
     private int tick;
 
-    private int totalBirths = 0;
+    private final List<SimulationMetrics> metricsHistory = new ArrayList<>();
+
     private int totalDeaths = 0;
+    private int helperBirths = 0;
+    private int selfishBirths = 0;
+    private int helperCount = 0;
+    private int selfishCount = 0;
     private double cumulativeEnergy = 0.0;
+    private double avgEnergy = 0.0;
 
     public Simulation() {
         this(new GridManager(Constants.GRID_SIZE), new ArrayList<>(), new ArrayList<>(), Constants.RANDOM);
@@ -132,16 +138,34 @@ public class Simulation {
 
         maybeGenerateNewFood();
 
+        helperCount = 0;
+        selfishCount = 0;
+
         for (Agent agent : livingAgents) {
+            if (agent.getStrategy() == Strategy.HELPER) {
+                helperCount++;
+            } else if (agent.getStrategy() == Strategy.SELFISH) {
+                selfishCount++;
+            }
             cumulativeEnergy += agent.getEnergy();
         }
 
+        avgEnergy = livingAgents.isEmpty() ? 0.0 : cumulativeEnergy / livingAgents.size();
+
         log.info("Tick {} complete. {} agents remain.", tick, livingAgents.size());
-        log.info("Metrics at tick {}: Avg energy = {}, Births = {}, Deaths = {}",
-                tick,
-                cumulativeEnergy / livingAgents.size(),
-                totalBirths,
-                totalDeaths);
+
+        SimulationMetrics metrics = new SimulationMetrics();
+        metrics.setTick(tick);
+        metrics.setAvgEnergy(avgEnergy);
+        metrics.setTotalDeaths(totalDeaths);
+        metrics.setHelperCount(helperCount);
+        metrics.setSelfishCount(selfishCount);
+        metrics.setHelperBirths(helperBirths);
+        metrics.setSelfishBirths(selfishBirths);
+
+        metrics.logMetrics();
+        metricsHistory.add(metrics);
+
         cumulativeEnergy = 0.0;
 
     }
@@ -249,7 +273,11 @@ public class Simulation {
             livingAgents.add(child);
 
             agent.setLastReproducedTick(tick); // update cooldown
-            ++totalBirths;
+            if (child.getStrategy() == Strategy.HELPER) {
+                helperBirths++;
+            } else if (child.getStrategy() == Strategy.SELFISH) {
+                selfishBirths++;
+            }
 
             log.info("Agent {} reproduced at tick {}. Child agent {} created at {} with {} energy.",
                     agent.getId(), tick, child.getId(), childPos, splitEnergy);
