@@ -1,6 +1,7 @@
 package com.jacandre;
 
 import com.jacandre.models.Constants;
+import com.jacandre.utils.ExportToCSV;
 
 public class Main {
     public static void main(String[] args) {
@@ -39,5 +40,7 @@ public class Main {
         System.out.println("Simulation ended at tick " + sim.getTick());
         System.out.println("Final agent count: " + sim.getLivingAgents().size());
         System.out.println("Total execution time: " + durationMs + " ms");
+
+        ExportToCSV.exportMetricsToCSV("simulation_metrics.csv", sim.getMetricsHistory());
     }
 }
