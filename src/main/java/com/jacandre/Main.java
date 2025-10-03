@@ -1,5 +1,6 @@
 package com.jacandre;
 
+import com.jacandre.export.SimulationExporter;
 import com.jacandre.models.Constants;
 import com.jacandre.utils.ExportToCSV;
 
@@ -24,12 +25,12 @@ public class Main {
         Constants.NUM_AGENTS = numAgents; // override default
         long startTime = System.nanoTime();
 
-        Simulation sim = new Simulation();
+        Simulation simulation = new Simulation();
 
         for (int i = 0; i < maxTicks; i++) {
-            sim.stepSimulation();
-            if (sim.getLivingAgents().isEmpty()) {
-                System.out.println("All agents died at tick " + sim.getTick());
+            simulation.stepSimulation();
+            if (simulation.getLivingAgents().isEmpty()) {
+                System.out.println("All agents died at tick " + simulation.getTick());
                 break;
             }
         }
@@ -37,10 +38,11 @@ public class Main {
         long endTime = System.nanoTime();
         long durationMs = (endTime - startTime) / 1_000_000;
 
-        System.out.println("Simulation ended at tick " + sim.getTick());
-        System.out.println("Final agent count: " + sim.getLivingAgents().size());
+        System.out.println("Simulation ended at tick " + simulation.getTick());
+        System.out.println("Final agent count: " + simulation.getLivingAgents().size());
         System.out.println("Total execution time: " + durationMs + " ms");
 
-        ExportToCSV.exportMetricsToCSV("simulation_metrics.csv", sim.getMetricsHistory());
+        ExportToCSV.exportMetricsToCSV("simulation_metrics.csv", simulation.getMetricsHistory());
+        SimulationExporter.exportGridSnapshots("simulation_grid_snapshots.csv", simulation.getTimeline().getSnapshots(), simulation.getGridManager());
     }
 }
