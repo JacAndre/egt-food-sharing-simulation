@@ -15,6 +15,7 @@ public class Simulation {
     private final List<Agent> livingAgents;
     private final List<Food> activeFoodSources;
     private final GridManager gridManager;
+    private final SimulationTimeline timeline = new SimulationTimeline();
     private int tick;
 
     private final List<SimulationMetrics> metricsHistory = new ArrayList<>();
@@ -32,7 +33,7 @@ public class Simulation {
         initialiseAgents();
         generateFoodSource();
 
-        log.info("Simulation initialized with {} agents on a {}x{} grid.",
+        log.info("Simulation initialised with {} agents on a {}x{} grid.",
                 livingAgents.size(), Constants.GRID_SIZE, Constants.GRID_SIZE);
     }
 
@@ -138,6 +139,8 @@ public class Simulation {
         livingAgents.removeAll(agentsToRemove);
 
         maybeGenerateNewFood();
+
+        recordSnapshot(tick, livingAgents, activeFoodSources);
 
         helperCount = 0;
         selfishCount = 0;
@@ -299,8 +302,17 @@ public class Simulation {
         }
     }
 
-
     private void applyCostOfLiving(Agent agent) {
         agent.decreaseEnergy(Constants.COST_OF_LIVING);
+    }
+
+    public void recordSnapshot(int tick, List<Agent> agents, List<Food> food) {
+        Map<Point, GridEntity> snapshotState = new HashMap<>();
+        for (Point p : gridManager.getOccupiedPositions()) {
+            GridEntity entity = gridManager.getEntityAt(p);
+            snapshotState.put(new Point(p), entity); // copy position
+        }
+
+        timeline.addSnapshot(new TickSnapshot(tick, snapshotState));
     }
 }
