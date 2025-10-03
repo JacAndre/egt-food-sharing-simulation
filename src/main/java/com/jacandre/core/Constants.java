@@ -1,4 +1,4 @@
-package com.jacandre.models;
+package com.jacandre.core;
 
 import java.util.Random;
 

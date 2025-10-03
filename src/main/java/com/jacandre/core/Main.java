@@ -1,8 +1,7 @@
-package com.jacandre;
+package com.jacandre.core;
 
-import com.jacandre.export.SimulationExporter;
-import com.jacandre.models.Constants;
-import com.jacandre.utils.ExportToCSV;
+import com.jacandre.export.SnapshotCSVExporter;
+import com.jacandre.export.MetricsCSVExporter;
 
 public class Main {
     public static void main(String[] args) {
@@ -42,7 +41,7 @@ public class Main {
         System.out.println("Final agent count: " + simulation.getLivingAgents().size());
         System.out.println("Total execution time: " + durationMs + " ms");
 
-        ExportToCSV.exportMetricsToCSV("simulation_metrics.csv", simulation.getMetricsHistory());
-        SimulationExporter.exportGridSnapshots("simulation_grid_snapshots.csv", simulation.getTimeline().getSnapshots(), simulation.getGridManager());
+        MetricsCSVExporter.exportMetricsToCSV("simulation_metrics.csv", simulation.getMetricsHistory());
+        SnapshotCSVExporter.exportGridSnapshots("simulation_grid_snapshots.csv", simulation.getTimeline().getSnapshots(), simulation.getGridManager());
     }
 }

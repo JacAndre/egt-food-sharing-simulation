@@ -1,6 +1,6 @@
-package com.jacandre.utils;
+package com.jacandre.export;
 
-import com.jacandre.models.SimulationMetrics;
+import com.jacandre.timeline.SimulationMetrics;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 import java.util.List;
 
 @Slf4j
-public class ExportToCSV {
+public class MetricsCSVExporter {
     public static void exportMetricsToCSV(String filename, List<SimulationMetrics> metricsHistory) {
         try (PrintWriter writer = new PrintWriter(filename)) {
             writer.println("Tick Number,Average Energy,Total Births,Total Deaths,HELPER Agents,SELFISH Agents,HELPER Births,SELFISH Births,Energy Snapshot");

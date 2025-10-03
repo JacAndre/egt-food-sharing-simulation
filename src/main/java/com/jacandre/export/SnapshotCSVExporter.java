@@ -1,5 +1,6 @@
 package com.jacandre.export;
 
+import com.jacandre.core.GridManager;
 import com.jacandre.models.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -11,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @Slf4j
-public class SimulationExporter {
+public class SnapshotCSVExporter {
     public static void exportGridSnapshots(String filename, List<TickSnapshot> snapshots, GridManager gridManager) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
             writer.println("tick,x,y,energy,strategy,type");

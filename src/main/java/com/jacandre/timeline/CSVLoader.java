@@ -5,7 +5,7 @@ import java.util.*;
 
 public class CSVLoader {
     public static List<GridSnapshot> loadSnapshots(String filename) throws IOException {
-        Map<Integer, List<GridEntityVisual>> tickMap = new HashMap<>();
+        Map<Integer, List<RenderableEntity>> tickMap = new HashMap<>();
 
         try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
             reader.readLine(); // skip header
@@ -19,7 +19,7 @@ public class CSVLoader {
                 String strategy = parts[4];
                 String type = parts[5];
 
-                GridEntityVisual entity = new GridEntityVisual();
+                RenderableEntity entity = new RenderableEntity();
                 entity.x = x;
                 entity.y = y;
                 entity.energy = energy;
@@ -31,7 +31,7 @@ public class CSVLoader {
         }
 
         List<GridSnapshot> snapshots = new ArrayList<>();
-        for (Map.Entry<Integer, List<GridEntityVisual>> entry : tickMap.entrySet()) {
+        for (Map.Entry<Integer, List<RenderableEntity>> entry : tickMap.entrySet()) {
             snapshots.add(new GridSnapshot(entry.getKey(), entry.getValue()));
         }
 

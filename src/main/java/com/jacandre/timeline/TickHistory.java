@@ -1,5 +1,6 @@
-package com.jacandre.models;
+package com.jacandre.timeline;
 
+import com.jacandre.models.TickSnapshot;
 import lombok.Getter;
 
 import java.util.ArrayList;
@@ -7,7 +8,7 @@ import java.util.List;
 
 
 @Getter
-public class SimulationTimeline {
+public class TickHistory {
     private final List<TickSnapshot> snapshots = new ArrayList<>();
 
     public void addSnapshot(TickSnapshot snapshot) {

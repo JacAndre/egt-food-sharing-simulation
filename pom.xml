@@ -131,13 +131,13 @@
         <profile>
             <id>chart</id>
             <properties>
-                <main.class>com.jacandre.visualisation.ChartApp</main.class>
+                <main.class>com.jacandre.visualisation.MetricsDashboard</main.class>
             </properties>
         </profile>
         <profile>
             <id>grid</id>
             <properties>
-                <main.class>com.jacandre.timeline.GridVisualiser</main.class>
+                <main.class>com.jacandre.visualisation.GridVisualiser</main.class>
             </properties>
         </profile>
     </profiles>

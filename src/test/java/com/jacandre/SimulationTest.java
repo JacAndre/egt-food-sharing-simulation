@@ -1,5 +1,8 @@
 package com.jacandre;
 
+import com.jacandre.core.Constants;
+import com.jacandre.core.GridManager;
+import com.jacandre.core.Simulation;
 import com.jacandre.models.*;
 import org.junit.jupiter.api.Test;
 

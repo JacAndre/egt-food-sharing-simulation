@@ -1,6 +1,6 @@
 package com.jacandre.visualisation;
 
-import com.jacandre.models.SimulationMetrics;
+import com.jacandre.timeline.SimulationMetrics;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -20,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Slf4j
-public class ChartApp extends Application {
+public class MetricsDashboard extends Application {
     @Override
     public void start(Stage stage) {
         stage.setTitle("Simulation Metrics");
@@ -235,7 +235,7 @@ public class ChartApp extends Application {
         HBox controls = new HBox(10, tickLabel, tickSlider, playButton, refreshButton);
         controls.setAlignment(Pos.CENTER);
 
-        VBox layout = new VBox(10, controls, histogram);
+        VBox layout = new VBox(10, histogram, controls);
         layout.setPadding(new Insets(10));
 
         return layout;

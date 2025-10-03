@@ -1,6 +1,8 @@
-package com.jacandre.timeline;
+package com.jacandre.visualisation;
 
-import com.jacandre.models.Constants;
+import com.jacandre.core.Constants;
+import com.jacandre.timeline.CSVLoader;
+import com.jacandre.timeline.GridSnapshot;
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
@@ -18,7 +20,7 @@ import java.util.List;
 
 public class GridVisualiser extends Application {
     private List<GridSnapshot> snapshots;
-    private GridCanvas canvas;
+    private SimulationCanvas canvas;
     private int currentTick = 0;
 
     static class Delta { double x, y; }
@@ -27,7 +29,7 @@ public class GridVisualiser extends Application {
     public void start(Stage stage) throws Exception {
         snapshots = CSVLoader.loadSnapshots("simulation_grid_snapshots.csv");
 
-        canvas = new GridCanvas(Constants.GRID_SIZE);
+        canvas = new SimulationCanvas(Constants.GRID_SIZE);
         canvas.render(snapshots.get(currentTick));
 
         Slider tickSlider = new Slider(0, snapshots.size() - 1, 0);

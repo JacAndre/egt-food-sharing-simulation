@@ -1,5 +1,6 @@
 package com.jacandre.models;
 
+import com.jacandre.core.Constants;
 import lombok.Getter;
 import lombok.Setter;
 

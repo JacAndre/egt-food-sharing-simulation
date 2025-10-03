@@ -1,6 +1,8 @@
-package com.jacandre;
+package com.jacandre.core;
 
 import com.jacandre.models.*;
+import com.jacandre.timeline.SimulationMetrics;
+import com.jacandre.timeline.TickHistory;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -15,7 +17,7 @@ public class Simulation {
     private final List<Agent> livingAgents;
     private final List<Food> activeFoodSources;
     private final GridManager gridManager;
-    private final SimulationTimeline timeline = new SimulationTimeline();
+    private final TickHistory timeline = new TickHistory();
     private int tick;
 
     private final List<SimulationMetrics> metricsHistory = new ArrayList<>();

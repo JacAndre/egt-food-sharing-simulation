@@ -1,13 +1,15 @@
-package com.jacandre.timeline;
+package com.jacandre.visualisation;
 
+import com.jacandre.timeline.RenderableEntity;
+import com.jacandre.timeline.GridSnapshot;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
-public class GridCanvas extends Canvas {
+public class SimulationCanvas extends Canvas {
     private static final int CELL_SIZE = 10;
 
-    public GridCanvas(int gridSize) {
+    public SimulationCanvas(int gridSize) {
         super(gridSize * CELL_SIZE, gridSize * CELL_SIZE);
     }
 
@@ -15,7 +17,7 @@ public class GridCanvas extends Canvas {
         GraphicsContext gc = getGraphicsContext2D();
         gc.clearRect(0, 0, getWidth(), getHeight());
 
-        for (GridEntityVisual entity : snapshot.entities) {
+        for (RenderableEntity entity : snapshot.entities) {
             Color color = switch (entity.type) {
                 case "FOOD" -> Color.GREEN;
                 case "AGENT" -> entity.strategy.equals("HELPER") ? Color.BLUE : Color.RED;

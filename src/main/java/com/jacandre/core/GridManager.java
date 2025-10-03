@@ -1,5 +1,6 @@
-package com.jacandre.models;
+package com.jacandre.core;
 
+import com.jacandre.models.GridEntity;
 import net.jcip.annotations.ThreadSafe;
 
 import java.awt.Point;

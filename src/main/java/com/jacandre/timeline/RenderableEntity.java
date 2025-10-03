@@ -1,6 +1,6 @@
 package com.jacandre.timeline;
 
-public class GridEntityVisual {
+public class RenderableEntity {
     public int x, y;
     public String type;
     public String strategy;

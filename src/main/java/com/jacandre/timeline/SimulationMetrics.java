@@ -1,4 +1,4 @@
-package com.jacandre.models;
+package com.jacandre.timeline;
 
 import lombok.Getter;
 import lombok.Setter;
