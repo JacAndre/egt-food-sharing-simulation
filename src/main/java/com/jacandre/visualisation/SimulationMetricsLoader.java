@@ -1,6 +1,7 @@
 package com.jacandre.visualisation;
 
 import com.jacandre.models.SimulationMetrics;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 public class SimulationMetricsLoader {
     public static List<SimulationMetrics> loadFromCSV(String filename) {
         List<SimulationMetrics> metricsList = new ArrayList<>();
@@ -19,7 +21,7 @@ public class SimulationMetricsLoader {
                 metricsList.add(metrics);
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Failed to load CSV: {}", (Object) e.getStackTrace());
         }
         return metricsList;
     }
