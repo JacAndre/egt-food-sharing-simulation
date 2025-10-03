@@ -115,10 +115,30 @@
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
-                <configuration>
-                    <mainClass>com.jacandre.visualisation.ChartApp</mainClass>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>default-cli</id>
+                        <configuration>
+                            <mainClass>${main.class}</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>chart</id>
+            <properties>
+                <main.class>com.jacandre.visualisation.ChartApp</main.class>
+            </properties>
+        </profile>
+        <profile>
+            <id>grid</id>
+            <properties>
+                <main.class>com.jacandre.timeline.GridVisualiser</main.class>
+            </properties>
+        </profile>
+    </profiles>
 </project>
