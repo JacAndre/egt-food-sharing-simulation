@@ -4,6 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Getter
 @Setter
 @Slf4j
@@ -16,6 +19,7 @@ public class SimulationMetrics {
     int selfishCount;
     int helperBirths;
     int selfishBirths;
+    private List<Double> energySnapshot;
 
     public SimulationMetrics() {
 
@@ -31,8 +35,13 @@ public class SimulationMetrics {
     }
 
     public String toCSVRow() {
-        return String.format("%d,%.2f,%d,%d,%d,%d,%d,%d",
+        String snapshotString = energySnapshot == null || energySnapshot.isEmpty() ? "" :
+                energySnapshot.stream()
+                        .map(e -> String.format("%.2f", e))
+                        .collect(Collectors.joining(","));
+
+        return String.format("%d,%.2f,%d,%d,%d,%d,%d,%d,\"%s\"",
                 tick, avgEnergy, totalBirths, totalDeaths,
-                helperCount, selfishCount, helperBirths, selfishBirths);
+                helperCount, selfishCount, helperBirths, selfishBirths, snapshotString);
     }
 }
