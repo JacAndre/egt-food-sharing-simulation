@@ -1,0 +1,14 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="egt-food-sharing-simulation:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/egt_food_sharing_simulation_jar</output-path>
+    <root id="archive" name="simulation.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+      <element id="module-output" name="egt-food-sharing-simulation" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/slf4j/slf4j-simple/2.0.9/slf4j-simple-2.0.9.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/2.0.9/slf4j-api-2.0.9.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
