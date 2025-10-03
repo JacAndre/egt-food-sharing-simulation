@@ -42,6 +42,6 @@ public class Main {
         System.out.println("Total execution time: " + durationMs + " ms");
 
         MetricsCSVExporter.exportMetricsToCSV("simulation_metrics.csv", simulation.getMetricsHistory());
-        SnapshotCSVExporter.exportGridSnapshots("simulation_grid_snapshots.csv", simulation.getTimeline().getSnapshots(), simulation.getGridManager());
+        SnapshotCSVExporter.exportGridSnapshots("simulation_grid_snapshots.csv", simulation.getTimeline().getSnapshots());
     }
 }

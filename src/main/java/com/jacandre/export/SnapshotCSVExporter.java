@@ -13,7 +13,7 @@ import java.util.Map;
 
 @Slf4j
 public class SnapshotCSVExporter {
-    public static void exportGridSnapshots(String filename, List<TickSnapshot> snapshots, GridManager gridManager) {
+    public static void exportGridSnapshots(String filename, List<TickSnapshot> snapshots) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filename))) {
             writer.println("tick,x,y,energy,strategy,type");
 
