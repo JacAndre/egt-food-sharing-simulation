@@ -30,7 +30,9 @@ public class HelperStrategy implements AgentStrategy {
                 if (agent.getEnergy() > transfer) {
                     agent.decreaseEnergy(transfer);
                     other.increaseEnergy(transfer);
-                    // Optional: log or track assist
+                    log.info("Agent {} assisted Agent {} with {} energy.", agent.getId(), other.getId(), transfer);
+                } else {
+                    log.debug("Agent {} attempted to assist but lacked sufficient energy.", agent.getId());
                 }
                 return;
             }

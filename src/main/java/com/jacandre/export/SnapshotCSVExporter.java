@@ -1,6 +1,5 @@
 package com.jacandre.export;
 
-import com.jacandre.core.GridManager;
 import com.jacandre.models.*;
 import lombok.extern.slf4j.Slf4j;
 

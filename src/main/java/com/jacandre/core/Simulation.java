@@ -150,7 +150,7 @@ public class Simulation {
 
         maybeGenerateNewFood(context);
 
-        recordSnapshot(tick, livingAgents, activeFoodSources);
+        recordSnapshot(tick);
 
         helperCount = 0;
         selfishCount = 0;
@@ -213,31 +213,6 @@ public class Simulation {
         agent.act(gridManager, context);
     }
 
-    private void consumeFoodAt(Point p, Agent agent) {
-        GridEntity entity = gridManager.getEntityAt(p);
-        if (entity instanceof Food food) {
-            activeFoodSources.remove(food);
-            gridManager.removeEntity(food);
-            gridManager.releasePosition(p);
-            agent.increaseEnergy(Constants.FOOD_REWARD);
-        }
-    }
-
-    private void assistAgent(Agent helper, Agent recipient) {
-        double transferAmount = Constants.ASSIST_COST;
-
-        if (helper.getEnergy() <= transferAmount) {
-            log.debug("Agent {} attempted to assist but lacked sufficient energy.", helper.getId());
-            return;
-        }
-
-        helper.decreaseEnergy(transferAmount);
-        recipient.increaseEnergy(transferAmount);
-
-        log.info("Agent {} assisted Agent {} with {} energy.",
-                helper.getId(), recipient.getId(), transferAmount);
-    }
-
     private void maybeReproduce(Agent agent, SimulationContext context) {
         if (agent.getEnergy() < Constants.REPRODUCTION_THRESHOLD) return;
         if (tick - agent.getLastReproducedTick() < Constants.REPRODUCTION_COOLDOWN) return;
@@ -280,7 +255,7 @@ public class Simulation {
         agent.decreaseEnergy(Constants.COST_OF_LIVING);
     }
 
-    public void recordSnapshot(int tick, List<Agent> agents, List<Food> food) {
+    public void recordSnapshot(int tick) {
         Map<Point, GridEntity> snapshotState = new HashMap<>();
         for (Point p : gridManager.getOccupiedPositions()) {
             GridEntity entity = gridManager.getEntityAt(p);
