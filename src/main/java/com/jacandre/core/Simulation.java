@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 @Getter
 public class Simulation {
     private final List<Agent> livingAgents;
-    private final List<Food> activeFoodSources;
     private final GridManager gridManager;
     private final TickHistory timeline = new TickHistory();
     private int tick;
@@ -49,7 +48,6 @@ public class Simulation {
     public Simulation(GridManager gridManager, List<Agent> agents, List<Food> foodSources, Random random) {
         this.gridManager = gridManager;
         this.livingAgents = new ArrayList<>(agents);
-        this.activeFoodSources = new ArrayList<>(foodSources);
         this.tick = 0;
         Collections.shuffle(this.livingAgents, random);
     }
@@ -77,7 +75,7 @@ public class Simulation {
     }
 
     private void generateFoodSource() {
-        if (activeFoodSources.size() >= Constants.MAX_FOOD_SOURCES) {
+        if (gridManager.getFoodEntities().size() >= Constants.MAX_FOOD_SOURCES) {
             log.debug("Maximum food sources reached. Skipping generation.");
             return;
         }
@@ -90,28 +88,34 @@ public class Simulation {
 
         Food food = new Food();
         if (gridManager.placeEntity(food, pos)) {
-            activeFoodSources.add(food);
             log.info("Food source generated at {}", pos);
         }
     }
 
-    // Remove expired Food
+    // Remove expired food
     private void cleanUpFoodSources() {
-        Iterator<Food> iterator = activeFoodSources.iterator();
-        while (iterator.hasNext()) {
-            Food food = iterator.next();
+        Map<Point, GridEntity> foodEntities = gridManager.getEntitiesOfType(Food.class);
+
+        for (Map.Entry<Point, GridEntity> entry : foodEntities.entrySet()) {
+            Food food = (Food) entry.getValue();
+            Point pos = entry.getKey();
+
             food.ageOneTick();
             if (food.isExpired()) {
-                Point pos = gridManager.getPositionOf(food);
                 gridManager.removeEntity(food);
                 gridManager.releasePosition(pos);
-                iterator.remove();
                 log.info("Food at {} expired and removed.", pos);
             }
         }
     }
 
     public void stepSimulation() {
+        if (tick >= Constants.MAX_TICKS) {
+            log.info("Simulation terminated: reached maximum tick limit of {}", Constants.MAX_TICKS);
+            return;
+        }
+
+
         SimulationContext context = new SimulationContext(tick, Constants.RANDOM);
 
         tick++;
@@ -186,7 +190,6 @@ public class Simulation {
         metricsHistory.add(metrics);
 
         cumulativeEnergy = 0.0;
-
     }
 
     // TODO: Add strength-based arbitration for contested food consumption
@@ -243,7 +246,7 @@ public class Simulation {
     }
 
     private void maybeGenerateNewFood(SimulationContext context) {
-        if (activeFoodSources.size() >= Constants.MAX_FOOD_SOURCES) {
+        if (gridManager.getFoodEntities().size() >= Constants.MAX_FOOD_SOURCES) {
             return;
         }
         if (context.random().nextDouble() < Constants.FOOD_SPAWN_PROBABILITY) {
@@ -256,12 +259,6 @@ public class Simulation {
     }
 
     public void recordSnapshot(int tick) {
-        Map<Point, GridEntity> snapshotState = new HashMap<>();
-        for (Point p : gridManager.getOccupiedPositions()) {
-            GridEntity entity = gridManager.getEntityAt(p);
-            snapshotState.put(new Point(p), entity); // copy position
-        }
-
-        timeline.addSnapshot(new TickSnapshot(tick, snapshotState));
+        timeline.addSnapshot(new TickSnapshot(tick, gridManager.getEntitiesOfType(GridEntity.class)));
     }
 }

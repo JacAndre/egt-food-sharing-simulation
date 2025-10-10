@@ -1,6 +1,9 @@
 package com.jacandre.core;
 
+import com.jacandre.models.Agent;
+import com.jacandre.models.Food;
 import com.jacandre.models.GridEntity;
+import lombok.extern.slf4j.Slf4j;
 import net.jcip.annotations.ThreadSafe;
 
 import java.awt.Point;
@@ -10,6 +13,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+@Slf4j
 @ThreadSafe
 public class GridManager {
     private final GridEntity[][] grid;
@@ -108,6 +112,42 @@ public class GridManager {
         }
     }
 
+    public boolean tryConsumeFood(Point foodPos, Agent contender) {
+        Point wrapped = wrap(foodPos);
+        ReentrantLock lock = cellLocks[wrapped.x][wrapped.y];
+        lock.lock();
+
+        try {
+            GridEntity entity = grid[wrapped.x][wrapped.y];
+            if (!(entity instanceof Food)) return false;
+
+            // Scan for adjacent agents
+            List<GridEntity> neighbours = getOccupiedNeighbours(wrapped, 1);
+            List<Agent> contenders = neighbours.stream()
+                    .filter(e -> e instanceof Agent)
+                    .map(e -> (Agent) e)
+                    .filter(a -> getPositionOf(a).distance(wrapped) <= 1.0)
+                    .toList();
+
+            Agent strongest = contenders.stream()
+                    .max(Comparator.comparingDouble(Agent::getEnergy))
+                    .orElse(null);
+
+            if (strongest != null && strongest.equals(contender)) {
+                grid[wrapped.x][wrapped.y] = null;
+                entityPositions.remove(entity);
+                releasePosition(wrapped);
+                contender.increaseEnergy(Constants.FOOD_REWARD);
+                log.info("Agent {} won contested food at {} with energy {}", contender.getId(), foodPos, contender.getEnergy());
+                return true;
+            }
+
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public void removeEntity(GridEntity entity) {
         Point position = entityPositions.get(entity);
         if (position == null) {
@@ -155,8 +195,7 @@ public class GridManager {
             for (int dy = -radius; dy <= radius; dy++) {
                 if (dx == 0 && dy == 0) continue;
 
-                Point neighbour = new Point(centre.x + dx, centre.y + dy);
-                neighbours.add(wrap(neighbour));
+                neighbours.add(wrap(new Point(centre.x + dx, centre.y + dy)));
             }
         }
 
@@ -176,15 +215,60 @@ public class GridManager {
                 .collect(Collectors.toList());
     }
 
+    public Map<Point, GridEntity> getNeighbourEntities(Point centre, int radius) {
+        return getNeighbourPositions(centre, radius).stream()
+                .collect(Collectors.toMap(p -> p, this::getEntityAt));
+    }
 
-    public List<Point> getOccupiedPositions() {
-        List<Point> occupied = new ArrayList<>();
+    public List<Point> getEntitiesOfType(Point centre, int radius, Class<? extends GridEntity> type) {
+        return getNeighbourPositions(centre, radius).stream()
+                .filter(p -> type.isInstance(getEntityAt(p)))
+                .collect(Collectors.toList());
+    }
+
+    public Optional<Point> findNearest(Point from, List<Point> targets) {
+        return targets.stream()
+                .min(Comparator.comparingDouble(from::distanceSq));
+    }
+
+    public boolean consumeEntity(Point p, Agent consumer, double reward) {
+        GridEntity entity = getEntityAt(p);
+        if (entity == null) return false;
+        removeEntity(entity);
+        consumer.increaseEnergy(reward);
+        return true;
+    }
+
+    public Map<Point, GridEntity> getOccupiedEntities() {
+        return getEntitiesOfType(GridEntity.class); // all non-null entities
+    }
+
+    public Map<Point, GridEntity> getAgentEntities() {
+        return getEntitiesOfType(Agent.class);
+    }
+
+    public Map<Point, GridEntity> getFoodEntities() {
+        return getEntitiesOfType(Food.class);
+    }
+
+    public Map<Point, GridEntity> getEntitiesOfType(Class<? extends GridEntity> type) {
+        Map<Point, GridEntity> result = new HashMap<>();
         for (int x = 0; x < gridSize; x++) {
             for (int y = 0; y < gridSize; y++) {
-                if (grid[x][y] != null) occupied.add(new Point(x, y));
+                GridEntity entity = grid[x][y];
+                if (type.isInstance(entity)) {
+                    result.put(new Point(x, y), entity);
+                }
             }
         }
-        return occupied;
+        return result;
+    }
+
+
+    public Point stepToward(Point from, Point to) {
+        int dx = Integer.compare(to.x, from.x);
+        int dy = Integer.compare(to.y, from.y);
+        return wrap(new Point(from.x + dx, from.y + dy));
     }
 
     public int availableCount() {

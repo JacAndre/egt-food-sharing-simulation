@@ -4,10 +4,11 @@ import java.util.Random;
 
 public class Constants {
     // Simulation Grid and Agent Count
-    public static final int GRID_SIZE = 150;
-    public static int NUM_AGENTS = 1500; // Total number of agents (max GRID_SIZE * GRID_SIZE)
+    public static final int GRID_SIZE = 50;
+    public static int NUM_AGENTS = 200; // Total number of agents (max GRID_SIZE * GRID_SIZE)
     public static final int MAX_FOOD_SOURCES = 100;
     public static final double FOOD_SPAWN_PROBABILITY = 0.35; // 20% chance per tick
+    public static final int MAX_TICKS = 500;
 
     // Core Game Parameters
     public static final double INITIAL_ENERGY = 100.0;
@@ -15,8 +16,9 @@ public class Constants {
     public static final int REPRODUCTION_COOLDOWN = 40;
     public static final double COST_OF_LIVING = 0.4; // Includes movement cost
     public static final double MOVE_COST = 0.7; // Includes movement cost
-    public static final double FOOD_REWARD = 25.0;
+    public static final double FOOD_REWARD = 100.0;
     public static final int FOOD_LIFESPAN = 100;
+    public static final int VISION_RADIUS = 100;
 
     // Assist Mechanism Parameters
     public static final double ASSIST_COST = 1.0; // Cost incurred by Helper when offering assistance
