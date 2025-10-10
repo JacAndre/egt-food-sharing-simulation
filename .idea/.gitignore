@@ -1,4 +1,9 @@
 # Default ignored files
 /shelf/
 /workspace.xml
-../.idea
+
+# Ignore IDE config folders
+.idea/
+.itea/
+*.iml
+
