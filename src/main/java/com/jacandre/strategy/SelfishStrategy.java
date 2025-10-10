@@ -5,11 +5,13 @@ import com.jacandre.core.GridManager;
 import com.jacandre.core.SimulationContext;
 import com.jacandre.models.Agent;
 import com.jacandre.models.Food;
-import com.jacandre.models.GridEntity;
+import lombok.extern.slf4j.Slf4j;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Optional;
 
+@Slf4j
 public class SelfishStrategy implements AgentStrategy {
 
     @Override
@@ -17,24 +19,30 @@ public class SelfishStrategy implements AgentStrategy {
         Point pos = grid.getPositionOf(agent);
         if (pos == null) return;
 
-        List<Point> neighbours = grid.getNeighbourPositions(pos, 1);
+        // 1. Seek food within vision radius
+        List<Point> foodPositions = grid.getEntitiesOfType(pos, Constants.VISION_RADIUS, Food.class);
+        Optional<Point> nearestFood = grid.findNearest(pos, foodPositions);
 
-        // 1. Prioritise food
-        for (Point p : neighbours) {
-            GridEntity entity = grid.getEntityAt(p);
-            if (entity instanceof Food) {
-                grid.removeEntity(entity);
-                grid.releasePosition(p);
-                agent.increaseEnergy(Constants.FOOD_REWARD);
+        if (nearestFood.isPresent()) {
+            Point target = grid.stepToward(pos, nearestFood.get());
 
-                if (grid.moveEntity(agent, p)) {
-                    agent.decreaseEnergy(Constants.MOVE_COST);
+            if (grid.isOccupied(target)) {
+                if (grid.tryConsumeFood(target, agent)) {
+                    if (grid.moveEntity(agent, target)) {
+                        agent.decreaseEnergy(Constants.MOVE_COST);
+                    }
+                    return;
                 }
-                return;
             }
+
+            grid.moveEntity(agent, target);
+            agent.decreaseEnergy(Constants.MOVE_COST);
+
+            return;
         }
 
-        // 2. Move to empty space
+
+        // 2. Fallback to random movement
         List<Point> emptyNeighbours = grid.getEmptyNeighbours(pos, 1);
         if (!emptyNeighbours.isEmpty()) {
             Point target = emptyNeighbours.get(context.random().nextInt(emptyNeighbours.size()));
