@@ -11,7 +11,7 @@ A modular, thread-safe agent-based simulation written in Java. Agents navigate a
 git clone https://github.com/your-username/agent-simulation.git```
 ```
 
-## 🚀 Features
+## Features
 
 - **GridManager**: Thread-safe spatial manager with fine-grained cell locking for concurrent movement and interaction.
 - **Agent Strategies**:
