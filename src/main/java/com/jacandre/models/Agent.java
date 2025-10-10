@@ -1,8 +1,14 @@
 package com.jacandre.models;
 
+import com.jacandre.strategy.AgentStrategy;
+import com.jacandre.strategy.HelperStrategy;
+import com.jacandre.strategy.SelfishStrategy;
 import com.jacandre.core.Constants;
+import com.jacandre.core.GridManager;
+import com.jacandre.core.SimulationContext;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 // Represents a single agent (strategy, energy, location on the grid) in the spatial game.
 
@@ -37,26 +43,33 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@Slf4j
 public class Agent implements GridEntity {
     private final String id;
-    private Strategy strategy;
     private double energy;
     private int lastReproducedTick = 0;
+    private AgentStrategy strategy;
 
-    public Agent(Strategy initialStrategy) {
+    public Agent(AgentStrategy initialStrategy) {
         this.id = java.util.UUID.randomUUID().toString();
         this.strategy = initialStrategy;
         this.energy = Constants.INITIAL_ENERGY;
     }
 
+    public void act(GridManager grid, SimulationContext context) {
+        if (strategy != null) {
+            strategy.execute(this, grid, context);
+        }
+    }
+
     // GETTERS
 
     public boolean isHelper() {
-        return this.strategy == Strategy.HELPER;
+        return this.strategy instanceof HelperStrategy;
     }
 
     public boolean isSelfish() {
-        return this.strategy == Strategy.SELFISH;
+        return this.strategy instanceof SelfishStrategy;
     }
 
     // MODIFIERS

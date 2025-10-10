@@ -4,6 +4,9 @@ import com.jacandre.core.Constants;
 import com.jacandre.core.GridManager;
 import com.jacandre.core.Simulation;
 import com.jacandre.models.*;
+import com.jacandre.strategy.AgentStrategy;
+import com.jacandre.strategy.HelperStrategy;
+import com.jacandre.strategy.SelfishStrategy;
 import org.junit.jupiter.api.Test;
 
 import java.awt.*;
@@ -14,10 +17,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SimulationTest {
 
+    private final AgentStrategy helperStrategy = new HelperStrategy();
+    private final AgentStrategy selfishStrategy = new SelfishStrategy();
+
     @Test
     void agentConsumesFoodWhenAdjacent() {
         GridManager grid = new GridManager(5);
-        Agent agent = new Agent(Strategy.SELFISH);
+        Agent agent = new Agent(new SelfishStrategy());
         Food food = new Food();
 
         Point agentPos = new Point(2, 2);
@@ -37,8 +43,8 @@ class SimulationTest {
     @Test
     void helperAssistsLowEnergyAgent() {
         GridManager grid = new GridManager(5);
-        Agent helper = new Agent(Strategy.HELPER);
-        Agent recipient = new Agent(Strategy.SELFISH);
+        Agent helper = new Agent(helperStrategy);
+        Agent recipient = new Agent(selfishStrategy);
         recipient.decreaseEnergy(Constants.INITIAL_ENERGY - Constants.LOW_ENERGY_THRESHOLD + 1);
 
         Point helperPos = new Point(2, 2);
@@ -58,7 +64,7 @@ class SimulationTest {
     @Test
     void agentMovesToEmptySpaceWhenNoFoodOrAgentsNearby() {
         GridManager grid = new GridManager(5);
-        Agent agent = new Agent(Strategy.SELFISH);
+        Agent agent = new Agent(selfishStrategy);
         Point agentPos = new Point(2, 2);
         grid.placeEntity(agent, agentPos);
 
@@ -73,7 +79,7 @@ class SimulationTest {
     @Test
     void agentDoesNotMoveWhenSurrounded() {
         GridManager grid = new GridManager(3);
-        Agent centre = new Agent(Strategy.SELFISH);
+        Agent centre = new Agent(selfishStrategy);
         Point centrePos = new Point(1, 1);
         grid.placeEntity(centre, centrePos);
 
@@ -81,7 +87,7 @@ class SimulationTest {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 if (dx == 0 && dy == 0) continue;
-                Agent blocker = new Agent(Strategy.SELFISH);
+                Agent blocker = new Agent(selfishStrategy);
                 grid.placeEntity(blocker, new Point(1 + dx, 1 + dy));
             }
         }
@@ -97,7 +103,7 @@ class SimulationTest {
     @Test
     void agentDiesWhenEnergyDepletes() {
         GridManager grid = new GridManager(5);
-        Agent agent = new Agent(Strategy.SELFISH);
+        Agent agent = new Agent(helperStrategy);
         agent.decreaseEnergy(Constants.INITIAL_ENERGY); // Set to 0
 
         Point pos = new Point(2, 2);
@@ -130,7 +136,7 @@ class SimulationTest {
     @Test
     void agentRespectsReproductionCooldown() {
         GridManager grid = new GridManager(5);
-        Agent parent = new Agent(Strategy.SELFISH);
+        Agent parent = new Agent(helperStrategy);
         parent.setEnergy(Constants.INITIAL_ENERGY);
 
         Point parentPos = new Point(2, 2);

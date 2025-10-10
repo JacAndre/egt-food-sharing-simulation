@@ -1,6 +1,9 @@
 package com.jacandre.core;
 
 import com.jacandre.models.*;
+import com.jacandre.strategy.AgentStrategy;
+import com.jacandre.strategy.HelperStrategy;
+import com.jacandre.strategy.SelfishStrategy;
 import com.jacandre.timeline.SimulationMetrics;
 import com.jacandre.timeline.TickHistory;
 import lombok.Getter;
@@ -19,6 +22,9 @@ public class Simulation {
     private final GridManager gridManager;
     private final TickHistory timeline = new TickHistory();
     private int tick;
+
+    private final AgentStrategy helperStrategy = new HelperStrategy();
+    private final AgentStrategy selfishStrategy = new SelfishStrategy();
 
     private final List<SimulationMetrics> metricsHistory = new ArrayList<>();
 
@@ -56,7 +62,7 @@ public class Simulation {
                 break;
             }
 
-            Strategy strategy = Constants.RANDOM.nextBoolean() ? Strategy.HELPER : Strategy.SELFISH;
+            AgentStrategy strategy = Constants.RANDOM.nextBoolean() ? helperStrategy : selfishStrategy;
             Agent agent = new Agent(strategy);
 
             boolean placed = gridManager.placeEntity(agent, pos);
@@ -106,6 +112,8 @@ public class Simulation {
     }
 
     public void stepSimulation() {
+        SimulationContext context = new SimulationContext(tick, Constants.RANDOM);
+
         tick++;
         log.debug("Tick {} begins", tick);
 
@@ -121,8 +129,8 @@ public class Simulation {
                 continue;
             }
 
-            act(agent);
-            maybeReproduce(agent);
+            act(agent, context);
+            maybeReproduce(agent, context);
             applyCostOfLiving(agent);
 
             if (agent.getEnergy() <= 0) {
@@ -140,7 +148,7 @@ public class Simulation {
         }
         livingAgents.removeAll(agentsToRemove);
 
-        maybeGenerateNewFood();
+        maybeGenerateNewFood(context);
 
         recordSnapshot(tick, livingAgents, activeFoodSources);
 
@@ -148,9 +156,9 @@ public class Simulation {
         selfishCount = 0;
 
         for (Agent agent : livingAgents) {
-            if (agent.getStrategy() == Strategy.HELPER) {
+            if (agent.isHelper()) {
                 helperCount++;
-            } else if (agent.getStrategy() == Strategy.SELFISH) {
+            } else if (agent.isSelfish()) {
                 selfishCount++;
             }
             cumulativeEnergy += agent.getEnergy();
@@ -201,44 +209,8 @@ public class Simulation {
     // Status:
     // Deferred until MVP is stable and single-agent decision flow is complete.
 
-    private void act(Agent agent) {
-        Point pos = gridManager.getPositionOf(agent);
-        List<Point> neighbours = gridManager.getNeighbourPositions(pos, 1);
-
-        // 1. Prioritise food
-        for (Point p : neighbours) {
-            GridEntity entity = gridManager.getEntityAt(p);
-            if (entity instanceof Food) {
-                consumeFoodAt(p, agent);
-                boolean moved = gridManager.moveEntity(agent, p);
-                if (moved) {
-                    agent.decreaseEnergy(Constants.MOVE_COST);
-                }
-                return;
-            }
-
-        }
-
-        // 2. Assist if HELPER and no food found
-        if (agent.isHelper()) {
-            for (Point p : neighbours) {
-                GridEntity entity = gridManager.getEntityAt(p);
-                if (entity instanceof Agent other && other.getEnergy() < Constants.LOW_ENERGY_THRESHOLD) {
-                    assistAgent(agent, other);
-                    return;
-                }
-            }
-        }
-
-        // 3. Move to empty space
-        List<Point> emptyNeighbours = gridManager.getEmptyNeighbours(pos, 1);
-        if (!emptyNeighbours.isEmpty()) {
-            Point target = emptyNeighbours.get(Constants.RANDOM.nextInt(emptyNeighbours.size()));
-            boolean moved = gridManager.moveEntity(agent, target);
-            if (moved) {
-                agent.decreaseEnergy(Constants.MOVE_COST);
-            }
-        }
+    private void act(Agent agent, SimulationContext context) {
+        agent.act(gridManager, context);
     }
 
     private void consumeFoodAt(Point p, Agent agent) {
@@ -266,7 +238,7 @@ public class Simulation {
                 helper.getId(), recipient.getId(), transferAmount);
     }
 
-    private void maybeReproduce(Agent agent) {
+    private void maybeReproduce(Agent agent, SimulationContext context) {
         if (agent.getEnergy() < Constants.REPRODUCTION_THRESHOLD) return;
         if (tick - agent.getLastReproducedTick() < Constants.REPRODUCTION_COOLDOWN) return;
 
@@ -274,7 +246,7 @@ public class Simulation {
         List<Point> emptyNeighbours = gridManager.getEmptyNeighbours(parentPos, 1);
         if (emptyNeighbours.isEmpty()) return;
 
-        Point childPos = emptyNeighbours.get(Constants.RANDOM.nextInt(emptyNeighbours.size()));
+        Point childPos = emptyNeighbours.get(context.random().nextInt(emptyNeighbours.size()));
         Agent child = new Agent(agent.getStrategy());
 
         if (gridManager.placeEntity(child, childPos)) {
@@ -284,9 +256,9 @@ public class Simulation {
             livingAgents.add(child);
 
             agent.setLastReproducedTick(tick); // update cooldown
-            if (child.getStrategy() == Strategy.HELPER) {
+            if (child.isHelper()) {
                 helperBirths++;
-            } else if (child.getStrategy() == Strategy.SELFISH) {
+            } else if (child.isSelfish()) {
                 selfishBirths++;
             }
 
@@ -295,11 +267,11 @@ public class Simulation {
         }
     }
 
-    private void maybeGenerateNewFood() {
+    private void maybeGenerateNewFood(SimulationContext context) {
         if (activeFoodSources.size() >= Constants.MAX_FOOD_SOURCES) {
             return;
         }
-        if (Constants.RANDOM.nextDouble() < Constants.FOOD_SPAWN_PROBABILITY) {
+        if (context.random().nextDouble() < Constants.FOOD_SPAWN_PROBABILITY) {
             generateFoodSource();
         }
     }

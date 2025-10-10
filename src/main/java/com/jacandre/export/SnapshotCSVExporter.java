@@ -23,9 +23,13 @@ public class SnapshotCSVExporter {
                     GridEntity entity = entry.getValue();
 
                     if (entity instanceof Agent agent) {
-                        writer.printf("%d,%d,%d,%.2f,%s,AGENT%n",
-                                snapshot.tick(), pos.x, pos.y,
-                                agent.getEnergy(), agent.getStrategy().name());
+                        if (agent.isHelper()) {
+                            writer.printf("%d,%d,%d,%.2f,HELPER,AGENT%n", snapshot.tick(), pos.x, pos.y, agent.getEnergy());
+                        } else if (agent.isSelfish()) {
+                            writer.printf("%d,%d,%d,%.2f,SELFISH,AGENT%n", snapshot.tick(), pos.x, pos.y, agent.getEnergy());
+                        } else {
+                            writer.printf("%d,%d,%d,%.2f,%s,AGENT%n", snapshot.tick(), pos.x, pos.y, agent.getEnergy(), agent.getStrategy());
+                        }
                     } else if (entity instanceof Food) {
                         writer.printf("%d,%d,%d,,,FOOD%n",
                                 snapshot.tick(), pos.x, pos.y);
