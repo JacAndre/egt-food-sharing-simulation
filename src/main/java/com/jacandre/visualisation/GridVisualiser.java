@@ -25,6 +25,8 @@ public class GridVisualiser extends Application {
 
     static class Delta { double x, y; }
 
+    // TODO: Let users filter which ticks to view (e.g. only every 10th tick, or only when food drops below threshold).
+
     @Override
     public void start(Stage stage) throws Exception {
         snapshots = CSVLoader.loadSnapshots("simulation_grid_snapshots.csv");
